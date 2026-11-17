@@ -1,0 +1,39 @@
+name: Surveillance Bons Plans Mode
+
+on:
+  schedule:
+    # Exécute le script toutes les 5 minutes
+    - cron: '*/5 * * * *'
+  # Permet de lancer un test manuellement depuis l'onglet Actions
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v4
+
+      - name: Installation de Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Installation des dépendances
+        run: pip install -r requirements.txt
+
+      - name: Exécution du bot
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: python bot.py
+
+      - name: Sauvegarde de l'historique des deals vus
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add deals_vus.txt
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Mise à jour deals vus" && git push)
